@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maine Coon Mafia - Etsy Integration</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #f0f0f0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #f5c842, #e8a020);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle { color: #888; margin-bottom: 2rem; }
+        .status-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .status-card h2 { color: #f5c842; font-size: 1.1rem; margin-bottom: 0.8rem; }
+        .status-dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-dot.connected { background: #4CAF50; }
+        .status-dot.disconnected { background: #f44336; }
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.8rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.15s;
+            text-decoration: none;
+        }
+        .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-etsy { background: #F1641E; color: white; }
+        .btn-gold { background: linear-gradient(135deg, #f5c842, #e8a020); color: #0a0a0a; }
+        .btn-outline { background: transparent; border: 1px solid #555; color: #ccc; }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.85rem; }
+
+        /* Shop Info */
+        .shop-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #222;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .shop-info img {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #333;
+        }
+        .shop-info .shop-name { font-size: 1.1rem; font-weight: 600; color: #f5c842; }
+        .shop-info .shop-detail { font-size: 0.85rem; color: #888; }
+
+        /* Listings Grid */
+        .listings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .listing-card {
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .listing-card:hover { border-color: #f5c842; }
+        .listing-card img {
+            width: 100%; height: 150px;
+            object-fit: cover;
+            background: #333;
+        }
+        .listing-card .listing-info { padding: 0.8rem; }
+        .listing-card .listing-title {
+            font-size: 0.8rem;
+            color: #ccc;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .listing-card .listing-price { color: #4CAF50; font-weight: 600; margin-top: 0.3rem; }
+
+        /* Upload Section */
+        .upload-section { margin-top: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; color: #aaa; font-size: 0.85rem; margin-bottom: 0.3rem; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.7rem;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #f0f0f0;
+            font-size: 0.95rem;
+        }
+
+        /* Log */
+        .log {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.8rem;
+            color: #7fba00;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        .log-entry { margin-bottom: 0.3rem; }
+        .log-entry.error { color: #f44336; }
+        .log-entry.success { color: #4CAF50; }
+        .log-entry.info { color: #2196F3; }
+
+        .result-card {
+            background: #1a2a1a;
+            border: 1px solid #2a4a2a;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        .result-card.visible { display: block; }
+        .result-card h3 { color: #4CAF50; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .result-card a { color: #f5c842; }
+
+        .hidden { display: none; }
+        .back { color: #999; text-decoration: none; display: inline-block; margin-bottom: 1.5rem; }
+        .back:hover { color: #f5c842; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back">← Back to Home</a>
+        <h1>🏪 Etsy Integration</h1>
+        <p class="subtitle">Connect your Etsy shop to manage listings and upload mockup images</p>
+
+        <!-- Connection Status -->
+        <div class="status-card">
+            <h2>Connection Status</h2>
+            <div id="status-text">
+                <span class="status-dot disconnected" id="status-dot"></span>
+                <span id="status-label">Checking...</span>
+            </div>
+            <div style="margin-top: 1rem;">
+                <a href="/auth/etsy" class="btn btn-etsy" id="connect-btn">
+                    🔗 Connect Etsy Shop
+                </a>
+                <button class="btn btn-outline btn-sm hidden" id="disconnect-btn" onclick="disconnect()">
+                    Disconnect
+                </button>
+            </div>
+            <div id="shop-container"></div>
+        </div>
+
+        <!-- Shop Listings (shown after auth) -->
+        <div class="status-card hidden" id="listings-section">
+            <h2>📦 Shop Listings</h2>
+            <p style="color: #888; font-size: 0.85rem; margin-bottom: 0.8rem;">Your active Etsy listings (click to select for image upload)</p>
+            <div class="listings-grid" id="listings-grid">
+                <p style="color: #666;">Loading listings...</p>
+            </div>
+        </div>
+
+        <!-- Upload Mockup Image (shown after selecting listing) -->
+        <div class="status-card hidden" id="upload-section">
+            <h2>📸 Upload Mockup Image</h2>
+            <p style="color: #888; font-size: 0.85rem; margin-bottom: 0.8rem;">
+                Selected listing: <strong id="selected-listing-title">None</strong>
+            </p>
+            <form onsubmit="uploadImage(event)">
+                <div class="form-group">
+                    <label>Image URL (mockup)</label>
+                    <input type="url" id="upload-url" placeholder="https://..." required>
+                </div>
+                <button type="submit" class="btn btn-gold" id="upload-btn">Upload Image →</button>
+            </form>
+            <div class="result-card" id="upload-result">
+                <h3>✅ Image Uploaded Successfully!</h3>
+                <p id="upload-result-text"></p>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="status-card">
+            <h2>📋 Activity Log</h2>
+            <div class="log" id="log">
+                <div class="log-entry info">Initializing Etsy integration...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        let shopId = null;
+        let selectedListingId = null;
+
+        function addLog(msg, type = '') {
+            const ts = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${ts}] ${msg}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function checkStatus() {
+            try {
+                const res = await fetch('/api/etsy/status');
+                const data = await res.json();
+                const dot = document.getElementById('status-dot');
+                const label = document.getElementById('status-label');
+                const connectBtn = document.getElementById('connect-btn');
+                const disconnectBtn = document.getElementById('disconnect-btn');
+                const listingsSection = document.getElementById('listings-section');
+
+                if (data.authenticated) {
+                    dot.className = 'status-dot connected';
+                    label.textContent = `Connected (token expires in ${data.expires_in}s)`;
+                    connectBtn.classList.add('hidden');
+                    disconnectBtn.classList.remove('hidden');
+                    addLog('Etsy account connected via OAuth 2.0 + PKCE!', 'success');
+                    loadShopInfo();
+                } else {
+                    dot.className = 'status-dot disconnected';
+                    label.textContent = 'Not connected';
+                    connectBtn.classList.remove('hidden');
+                    disconnectBtn.classList.add('hidden');
+                    listingsSection.classList.add('hidden');
+                    addLog('Not connected to Etsy. Click "Connect" to authorize via OAuth.', 'info');
+                }
+            } catch (err) {
+                addLog('Error checking status: ' + err.message, 'error');
+            }
+        }
+
+        async function loadShopInfo() {
+            addLog('Fetching shop info...', 'info');
+            try {
+                const res = await fetch('/api/etsy/me');
+                const data = await res.json();
+
+                if (data.shop) {
+                    const shop = Array.isArray(data.shop) ? data.shop[0] : data.shop;
+                    shopId = shop.shop_id;
+                    const container = document.getElementById('shop-container');
+                    container.innerHTML = `
+                        <div class="shop-info">
+                            <img src="${shop.icon_url_fullxfull || ''}" alt="Shop icon" onerror="this.style.display='none'">
+                            <div>
+                                <div class="shop-name">${shop.shop_name}</div>
+                                <div class="shop-detail">Shop ID: ${shop.shop_id} • ${shop.listing_active_count || 0} active listings</div>
+                                <div class="shop-detail">${shop.url || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                    addLog(`Shop loaded: ${shop.shop_name} (${shop.listing_active_count} listings)`, 'success');
+                    loadListings();
+                } else if (data.user) {
+                    addLog(`User authenticated: ${data.user.login_name || data.user.user_id}`, 'success');
+                    addLog('No shop found for this user.', 'info');
+                } else {
+                    addLog('Could not load shop info: ' + JSON.stringify(data), 'error');
+                }
+            } catch (err) {
+                addLog('Error loading shop: ' + err.message, 'error');
+            }
+        }
+
+        async function loadListings() {
+            if (!shopId) return;
+            addLog(`Fetching listings for shop ${shopId}...`, 'info');
+            const listingsSection = document.getElementById('listings-section');
+            
+            try {
+                const res = await fetch(`/api/etsy/listings?shop_id=${shopId}`);
+                const data = await res.json();
+                const grid = document.getElementById('listings-grid');
+                const listings = data.results || [];
+
+                if (listings.length === 0) {
+                    grid.innerHTML = '<p style="color:#666;">No active listings found.</p>';
+                    addLog('No active listings found.', 'info');
+                } else {
+                    grid.innerHTML = listings.map(l => `
+                        <div class="listing-card" onclick="selectListing('${l.listing_id}', '${l.title.replace(/'/g, "\\'")}')">
+                            <img src="${(l.images && l.images[0]?.url_570xN) || ''}" alt="${l.title}" onerror="this.style.background='#444'">
+                            <div class="listing-info">
+                                <div class="listing-title">${l.title}</div>
+                                <div class="listing-price">$${(l.price?.amount / l.price?.divisor || 0).toFixed(2)}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                    addLog(`Loaded ${listings.length} active listings`, 'success');
+                }
+                listingsSection.classList.remove('hidden');
+            } catch (err) {
+                addLog('Error loading listings: ' + err.message, 'error');
+            }
+        }
+
+        function selectListing(listingId, title) {
+            selectedListingId = listingId;
+            document.getElementById('selected-listing-title').textContent = title;
+            document.getElementById('upload-section').classList.remove('hidden');
+            addLog(`Selected listing: ${title} (${listingId})`, 'info');
+        }
+
+        async function uploadImage(e) {
+            e.preventDefault();
+            if (!selectedListingId || !shopId) return;
+            
+            const btn = document.getElementById('upload-btn');
+            btn.disabled = true;
+            btn.textContent = 'Uploading...';
+            
+            const imageUrl = document.getElementById('upload-url').value;
+            addLog(`Uploading image to listing ${selectedListingId}...`, 'info');
+            
+            try {
+                const res = await fetch(`/api/etsy/listings/${selectedListingId}/images?shop_id=${shopId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_url: imageUrl }),
+                });
+                const data = await res.json();
+                
+                if (data.listing_image_id) {
+                    addLog(`Image uploaded! ID: ${data.listing_image_id}`, 'success');
+                    document.getElementById('upload-result-text').textContent = `Image ID: ${data.listing_image_id}`;
+                    document.getElementById('upload-result').classList.add('visible');
+                } else {
+                    addLog(`Upload response: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (err) {
+                addLog('Upload error: ' + err.message, 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Upload Image →';
+        }
+
+        async function disconnect() {
+            await fetch('/api/etsy/disconnect', { method: 'POST' });
+            addLog('Disconnected from Etsy', 'info');
+            document.getElementById('shop-container').innerHTML = '';
+            document.getElementById('listings-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.add('hidden');
+            checkStatus();
+        }
+
+        // Handle URL params
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('success')) {
+            addLog('OAuth 2.0 + PKCE flow completed — authorization successful!', 'success');
+            window.history.replaceState({}, '', '/etsy-demo');
+        }
+        if (params.get('error')) {
+            addLog(`OAuth error: ${params.get('error')} ${params.get('detail') || ''}`, 'error');
+            window.history.replaceState({}, '', '/etsy-demo');
+        }
+
+        checkStatus();
+    </script>
+</body>
+</html>

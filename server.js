@@ -7,8 +7,14 @@ const PORT = process.env.PORT || 3000;
 // Pinterest OAuth config
 const PINTEREST_APP_ID = process.env.PINTEREST_APP_ID || '1550576';
 const PINTEREST_APP_SECRET = process.env.PINTEREST_APP_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI || 'https://maincoonmafia.com/auth/pinterest/callback';
-const SCOPES = 'boards:read,boards:write,pins:read,pins:write';
+const PINTEREST_REDIRECT_URI = process.env.REDIRECT_URI || 'https://maincoonmafia.com/auth/pinterest/callback';
+const PINTEREST_SCOPES = 'boards:read,boards:write,pins:read,pins:write';
+
+// Etsy OAuth config
+const ETSY_API_KEY = process.env.ETSY_API_KEY || 'f9onc3kqhz4zns3cyt9gshz1';
+const ETSY_SHARED_SECRET = process.env.ETSY_SHARED_SECRET;
+const ETSY_REDIRECT_URI = process.env.ETSY_REDIRECT_URI || 'https://maincoonmafia.com/auth/etsy/callback';
+const ETSY_SCOPES = 'shops_r shops_w listings_r listings_w listings_d images_r images_w';
 
 // In-memory session store (good enough for demo)
 const sessions = {};
@@ -29,40 +35,39 @@ app.use((req, res, next) => {
     next();
 });
 
+// ============ PKCE Helper ============
+function generatePKCE() {
+    // Code verifier: 43-128 character random string
+    const verifier = crypto.randomBytes(32).toString('base64url');
+    // Code challenge: SHA256 hash of verifier, base64url encoded
+    const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+    return { verifier, challenge };
+}
+
 // ============ Pinterest OAuth Flow ============
 
-// Step 1: Initiate OAuth - redirect to Pinterest
 app.get('/auth/pinterest', (req, res) => {
     const state = crypto.randomBytes(16).toString('hex');
-    req.session.oauth_state = state;
+    req.session.pinterest_oauth_state = state;
     
     const authUrl = `https://www.pinterest.com/oauth/?` +
         `client_id=${PINTEREST_APP_ID}` +
-        `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+        `&redirect_uri=${encodeURIComponent(PINTEREST_REDIRECT_URI)}` +
         `&response_type=code` +
-        `&scope=${encodeURIComponent(SCOPES)}` +
+        `&scope=${encodeURIComponent(PINTEREST_SCOPES)}` +
         `&state=${state}`;
     
     res.redirect(authUrl);
 });
 
-// Step 2: OAuth callback - exchange code for token
 app.get('/auth/pinterest/callback', async (req, res) => {
     const { code, state } = req.query;
     
-    if (!code) {
-        return res.redirect('/pinterest-demo?error=no_code');
-    }
-    
-    // Verify state
-    if (state !== req.session.oauth_state) {
-        return res.redirect('/pinterest-demo?error=state_mismatch');
-    }
+    if (!code) return res.redirect('/pinterest-demo?error=no_code');
+    if (state !== req.session.pinterest_oauth_state) return res.redirect('/pinterest-demo?error=state_mismatch');
     
     try {
-        // Exchange code for access token
         const basicAuth = Buffer.from(`${PINTEREST_APP_ID}:${PINTEREST_APP_SECRET}`).toString('base64');
-        
         const tokenRes = await fetch('https://api.pinterest.com/v5/oauth/token', {
             method: 'POST',
             headers: {
@@ -71,55 +76,40 @@ app.get('/auth/pinterest/callback', async (req, res) => {
             },
             body: new URLSearchParams({
                 grant_type: 'authorization_code',
-                code: code,
-                redirect_uri: REDIRECT_URI,
+                code,
+                redirect_uri: PINTEREST_REDIRECT_URI,
             }),
         });
-        
         const tokenData = await tokenRes.json();
         
         if (tokenData.access_token) {
             req.session.pinterest_token = tokenData.access_token;
-            req.session.token_type = tokenData.token_type;
-            req.session.scope = tokenData.scope;
+            req.session.pinterest_scope = tokenData.scope;
             res.redirect('/pinterest-demo?success=1');
         } else {
-            console.error('Token exchange failed:', tokenData);
+            console.error('Pinterest token exchange failed:', tokenData);
             res.redirect('/pinterest-demo?error=token_failed');
         }
     } catch (err) {
-        console.error('OAuth error:', err);
+        console.error('Pinterest OAuth error:', err);
         res.redirect('/pinterest-demo?error=exception');
     }
 });
 
-// ============ Pinterest API Endpoints ============
-
-// Get user's boards
+// Pinterest API endpoints
 app.get('/api/pinterest/boards', async (req, res) => {
-    if (!req.session.pinterest_token) {
-        return res.status(401).json({ error: 'Not authenticated' });
-    }
-    
+    if (!req.session.pinterest_token) return res.status(401).json({ error: 'Not authenticated' });
     try {
         const resp = await fetch('https://api.pinterest.com/v5/boards', {
             headers: { 'Authorization': `Bearer ${req.session.pinterest_token}` }
         });
-        const data = await resp.json();
-        res.json(data);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        res.json(await resp.json());
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Create a pin
 app.post('/api/pinterest/pins', async (req, res) => {
-    if (!req.session.pinterest_token) {
-        return res.status(401).json({ error: 'Not authenticated' });
-    }
-    
+    if (!req.session.pinterest_token) return res.status(401).json({ error: 'Not authenticated' });
     const { board_id, title, description, link, image_url } = req.body;
-    
     try {
         const resp = await fetch('https://api.pinterest.com/v5/pins', {
             method: 'POST',
@@ -128,35 +118,172 @@ app.post('/api/pinterest/pins', async (req, res) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                board_id,
-                title,
-                description,
-                link,
-                media_source: {
-                    source_type: 'image_url',
-                    url: image_url,
-                },
+                board_id, title, description, link,
+                media_source: { source_type: 'image_url', url: image_url },
             }),
         });
-        const data = await resp.json();
-        res.json(data);
+        res.json(await resp.json());
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/pinterest/status', (req, res) => {
+    res.json({ authenticated: !!req.session.pinterest_token, scope: req.session.pinterest_scope || null });
+});
+
+app.post('/api/pinterest/disconnect', (req, res) => {
+    delete req.session.pinterest_token;
+    delete req.session.pinterest_scope;
+    res.json({ ok: true });
+});
+
+// ============ Etsy OAuth Flow (with PKCE) ============
+
+app.get('/auth/etsy', (req, res) => {
+    const state = crypto.randomBytes(16).toString('hex');
+    const pkce = generatePKCE();
+    
+    req.session.etsy_oauth_state = state;
+    req.session.etsy_code_verifier = pkce.verifier;
+    
+    const authUrl = `https://www.etsy.com/oauth/connect?` +
+        `response_type=code` +
+        `&client_id=${ETSY_API_KEY}` +
+        `&redirect_uri=${encodeURIComponent(ETSY_REDIRECT_URI)}` +
+        `&scope=${encodeURIComponent(ETSY_SCOPES)}` +
+        `&state=${state}` +
+        `&code_challenge=${pkce.challenge}` +
+        `&code_challenge_method=S256`;
+    
+    res.redirect(authUrl);
+});
+
+app.get('/auth/etsy/callback', async (req, res) => {
+    const { code, state, error } = req.query;
+    
+    if (error) return res.redirect(`/etsy-demo?error=${error}`);
+    if (!code) return res.redirect('/etsy-demo?error=no_code');
+    if (state !== req.session.etsy_oauth_state) return res.redirect('/etsy-demo?error=state_mismatch');
+    
+    try {
+        // Exchange authorization code for access token (with PKCE verifier)
+        const tokenRes = await fetch('https://api.etsy.com/v3/public/oauth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                grant_type: 'authorization_code',
+                client_id: ETSY_API_KEY,
+                redirect_uri: ETSY_REDIRECT_URI,
+                code,
+                code_verifier: req.session.etsy_code_verifier,
+            }),
+        });
+        const tokenData = await tokenRes.json();
+        
+        if (tokenData.access_token) {
+            req.session.etsy_token = tokenData.access_token;
+            req.session.etsy_refresh_token = tokenData.refresh_token;
+            req.session.etsy_token_expires = Date.now() + (tokenData.expires_in * 1000);
+            res.redirect('/etsy-demo?success=1');
+        } else {
+            console.error('Etsy token exchange failed:', tokenData);
+            res.redirect(`/etsy-demo?error=token_failed&detail=${encodeURIComponent(JSON.stringify(tokenData))}`);
+        }
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Etsy OAuth error:', err);
+        res.redirect('/etsy-demo?error=exception');
     }
 });
 
-// Check auth status
-app.get('/api/pinterest/status', (req, res) => {
-    res.json({ 
-        authenticated: !!req.session.pinterest_token,
-        scope: req.session.scope || null
+// Etsy API endpoints
+app.get('/api/etsy/status', (req, res) => {
+    res.json({
+        authenticated: !!req.session.etsy_token,
+        expires_in: req.session.etsy_token_expires ? Math.max(0, Math.round((req.session.etsy_token_expires - Date.now()) / 1000)) : null,
     });
 });
 
-// Disconnect
-app.post('/api/pinterest/disconnect', (req, res) => {
-    delete req.session.pinterest_token;
-    delete req.session.scope;
+// Get shop info (uses the user's token to find their shop)
+app.get('/api/etsy/me', async (req, res) => {
+    if (!req.session.etsy_token) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+        // First get user info
+        const userResp = await fetch('https://openapi.etsy.com/v3/application/users/me', {
+            headers: {
+                'Authorization': `Bearer ${req.session.etsy_token}`,
+                'x-api-key': ETSY_API_KEY,
+            }
+        });
+        const userData = await userResp.json();
+        
+        if (userData.user_id) {
+            // Then get their shop
+            const shopResp = await fetch(`https://openapi.etsy.com/v3/application/users/${userData.user_id}/shops`, {
+                headers: {
+                    'Authorization': `Bearer ${req.session.etsy_token}`,
+                    'x-api-key': ETSY_API_KEY,
+                }
+            });
+            const shopData = await shopResp.json();
+            res.json({ user: userData, shop: shopData });
+        } else {
+            res.json({ user: userData, shop: null });
+        }
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Get shop listings
+app.get('/api/etsy/listings', async (req, res) => {
+    if (!req.session.etsy_token) return res.status(401).json({ error: 'Not authenticated' });
+    const shopId = req.query.shop_id;
+    if (!shopId) return res.status(400).json({ error: 'shop_id required' });
+    
+    try {
+        const resp = await fetch(`https://openapi.etsy.com/v3/application/shops/${shopId}/listings?limit=10&state=active`, {
+            headers: {
+                'Authorization': `Bearer ${req.session.etsy_token}`,
+                'x-api-key': ETSY_API_KEY,
+            }
+        });
+        res.json(await resp.json());
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Upload listing image
+app.post('/api/etsy/listings/:listingId/images', async (req, res) => {
+    if (!req.session.etsy_token) return res.status(401).json({ error: 'Not authenticated' });
+    const { listingId } = req.params;
+    const { image_url } = req.body;
+    
+    try {
+        // Fetch the image first
+        const imgResp = await fetch(image_url);
+        const imgBuffer = Buffer.from(await imgResp.arrayBuffer());
+        
+        // Create multipart form data manually
+        const boundary = crypto.randomBytes(16).toString('hex');
+        const body = Buffer.concat([
+            Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="image"; filename="mockup.jpg"\r\nContent-Type: image/jpeg\r\n\r\n`),
+            imgBuffer,
+            Buffer.from(`\r\n--${boundary}--\r\n`),
+        ]);
+        
+        const resp = await fetch(`https://openapi.etsy.com/v3/application/shops/${req.query.shop_id}/listings/${listingId}/images`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${req.session.etsy_token}`,
+                'x-api-key': ETSY_API_KEY,
+                'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            },
+            body,
+        });
+        res.json(await resp.json());
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/etsy/disconnect', (req, res) => {
+    delete req.session.etsy_token;
+    delete req.session.etsy_refresh_token;
+    delete req.session.etsy_token_expires;
     res.json({ ok: true });
 });
 
@@ -168,6 +295,10 @@ app.get('/privacy', (req, res) => {
 
 app.get('/pinterest-demo', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'pinterest-demo.html'));
+});
+
+app.get('/etsy-demo', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'etsy-demo.html'));
 });
 
 app.get('*', (req, res) => {
