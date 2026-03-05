@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maine Coon Mafia - Pinterest Integration</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #f0f0f0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #f5c842, #e8a020);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle { color: #888; margin-bottom: 2rem; }
+        
+        /* Status Section */
+        .status-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .status-card h2 { color: #f5c842; font-size: 1.1rem; margin-bottom: 0.8rem; }
+        .status-dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-dot.connected { background: #4CAF50; }
+        .status-dot.disconnected { background: #f44336; }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.8rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.15s;
+            text-decoration: none;
+        }
+        .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-pinterest {
+            background: #E60023;
+            color: white;
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, #f5c842, #e8a020);
+            color: #0a0a0a;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #555;
+            color: #ccc;
+        }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.85rem; }
+        
+        /* Form */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block;
+            color: #aaa;
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.7rem;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #f0f0f0;
+            font-size: 0.95rem;
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        
+        /* Log */
+        .log {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.8rem;
+            color: #7fba00;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        .log-entry { margin-bottom: 0.3rem; }
+        .log-entry.error { color: #f44336; }
+        .log-entry.success { color: #4CAF50; }
+        .log-entry.info { color: #2196F3; }
+        
+        /* Result */
+        .result-card {
+            background: #1a2a1a;
+            border: 1px solid #2a4a2a;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        .result-card.visible { display: block; }
+        .result-card h3 { color: #4CAF50; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .result-card a { color: #f5c842; }
+        
+        .hidden { display: none; }
+        .back { color: #999; text-decoration: none; display: inline-block; margin-bottom: 1.5rem; }
+        .back:hover { color: #f5c842; }
+        .mb-1 { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back">← Back to Home</a>
+        <h1>😼 Pinterest Integration</h1>
+        <p class="subtitle">Connect your Pinterest account to auto-pin Maine Coon Mafia products</p>
+        
+        <!-- Connection Status -->
+        <div class="status-card">
+            <h2>Connection Status</h2>
+            <div id="status-text">
+                <span class="status-dot disconnected" id="status-dot"></span>
+                <span id="status-label">Checking...</span>
+            </div>
+            <div style="margin-top: 1rem;">
+                <a href="/auth/pinterest" class="btn btn-pinterest" id="connect-btn">
+                    🔗 Connect Pinterest Account
+                </a>
+                <button class="btn btn-outline btn-sm hidden" id="disconnect-btn" onclick="disconnect()">
+                    Disconnect
+                </button>
+            </div>
+        </div>
+        
+        <!-- Create Pin Form (shown after auth) -->
+        <div class="status-card hidden" id="pin-section">
+            <h2>📌 Create a Pin</h2>
+            <form id="pin-form" onsubmit="createPin(event)">
+                <div class="form-group">
+                    <label>Board</label>
+                    <select id="board-select">
+                        <option value="">Loading boards...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Pin Title</label>
+                    <input type="text" id="pin-title" placeholder="e.g. Maine Coon Mafia Boss T-Shirt" 
+                           value="Maine Coon Mafia Boss T-Shirt - Funny Cat Dad Gift">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="pin-desc" placeholder="Describe your pin...">Your Maine Coon didn't choose the thug life — the thug life chose them. 😼 Premium Gildan Heavy Cotton tee, printed and shipped from the USA. Perfect gift for Maine Coon lovers! 🐱 #MaineCoon #CatShirt #MaineCoonMafia</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Link URL (Etsy listing)</label>
+                    <input type="url" id="pin-link" placeholder="https://www.etsy.com/listing/..." 
+                           value="https://www.etsy.com/shop/MaineCoonMafia">
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="url" id="pin-image" placeholder="https://..." 
+                           value="">
+                </div>
+                <button type="submit" class="btn btn-gold" id="create-btn">Create Pin →</button>
+            </form>
+            
+            <div class="result-card" id="pin-result">
+                <h3>✅ Pin Created Successfully!</h3>
+                <p>Pin ID: <span id="result-pin-id"></span></p>
+                <p><a id="result-pin-link" href="#" target="_blank">View on Pinterest →</a></p>
+            </div>
+        </div>
+        
+        <!-- Activity Log -->
+        <div class="status-card">
+            <h2>📋 Activity Log</h2>
+            <div class="log" id="log">
+                <div class="log-entry info">Initializing Pinterest integration...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        
+        function addLog(msg, type = '') {
+            const ts = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${ts}] ${msg}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Check auth status on load
+        async function checkStatus() {
+            try {
+                const res = await fetch('/api/pinterest/status');
+                const data = await res.json();
+                const dot = document.getElementById('status-dot');
+                const label = document.getElementById('status-label');
+                const connectBtn = document.getElementById('connect-btn');
+                const disconnectBtn = document.getElementById('disconnect-btn');
+                const pinSection = document.getElementById('pin-section');
+                
+                if (data.authenticated) {
+                    dot.className = 'status-dot connected';
+                    label.textContent = `Connected (scopes: ${data.scope || 'all'})`;
+                    connectBtn.classList.add('hidden');
+                    disconnectBtn.classList.remove('hidden');
+                    pinSection.classList.remove('hidden');
+                    addLog('Pinterest account connected successfully!', 'success');
+                    loadBoards();
+                } else {
+                    dot.className = 'status-dot disconnected';
+                    label.textContent = 'Not connected';
+                    connectBtn.classList.remove('hidden');
+                    disconnectBtn.classList.add('hidden');
+                    pinSection.classList.add('hidden');
+                    addLog('Not connected to Pinterest. Click "Connect" to authorize.', 'info');
+                }
+            } catch (err) {
+                addLog('Error checking status: ' + err.message, 'error');
+            }
+        }
+        
+        // Load boards after auth
+        async function loadBoards() {
+            addLog('Fetching Pinterest boards...', 'info');
+            try {
+                const res = await fetch('/api/pinterest/boards');
+                const data = await res.json();
+                const select = document.getElementById('board-select');
+                select.innerHTML = '';
+                
+                const boards = data.items || [];
+                if (boards.length === 0) {
+                    select.innerHTML = '<option value="">No boards found — create one on Pinterest first</option>';
+                    addLog('No boards found. Create a board on Pinterest to pin to.', 'info');
+                } else {
+                    boards.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.name;
+                        select.appendChild(opt);
+                    });
+                    addLog(`Loaded ${boards.length} board(s)`, 'success');
+                }
+            } catch (err) {
+                addLog('Error loading boards: ' + err.message, 'error');
+            }
+        }
+        
+        // Create a pin
+        async function createPin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('create-btn');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+            
+            const payload = {
+                board_id: document.getElementById('board-select').value,
+                title: document.getElementById('pin-title').value,
+                description: document.getElementById('pin-desc').value,
+                link: document.getElementById('pin-link').value,
+                image_url: document.getElementById('pin-image').value,
+            };
+            
+            addLog(`Creating pin: "${payload.title}"`, 'info');
+            addLog(`Board: ${payload.board_id} | Link: ${payload.link}`, 'info');
+            
+            try {
+                const res = await fetch('/api/pinterest/pins', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+                
+                if (data.id) {
+                    addLog(`Pin created! ID: ${data.id}`, 'success');
+                    document.getElementById('result-pin-id').textContent = data.id;
+                    const pinUrl = `https://www.pinterest.com/pin/${data.id}/`;
+                    document.getElementById('result-pin-link').href = pinUrl;
+                    document.getElementById('pin-result').classList.add('visible');
+                } else {
+                    addLog(`Pin creation failed: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (err) {
+                addLog('Error creating pin: ' + err.message, 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Create Pin →';
+        }
+        
+        // Disconnect
+        async function disconnect() {
+            await fetch('/api/pinterest/disconnect', { method: 'POST' });
+            addLog('Disconnected from Pinterest', 'info');
+            checkStatus();
+        }
+        
+        // Handle URL params (success/error from OAuth redirect)
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('success')) {
+            addLog('OAuth flow completed — authorization successful!', 'success');
+            window.history.replaceState({}, '', '/pinterest-demo');
+        }
+        if (params.get('error')) {
+            addLog(`OAuth error: ${params.get('error')}`, 'error');
+            window.history.replaceState({}, '', '/pinterest-demo');
+        }
+        
+        checkStatus();
+    </script>
+</body>
+</html>
