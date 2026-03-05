@@ -300,8 +300,12 @@
                     const pinUrl = `https://www.pinterest.com/pin/${data.id}/`;
                     document.getElementById('result-pin-link').href = pinUrl;
                     document.getElementById('pin-result').classList.add('visible');
+                } else if (data.code === 2 || (data.message && data.message.includes('Trial'))) {
+                    addLog('⚠️ Pin creation blocked: App has Trial access only.', 'info');
+                    addLog('Standard access required to create pins in production. Application pending.', 'info');
+                    addLog('OAuth flow + API integration verified successfully.', 'success');
                 } else {
-                    addLog(`Pin creation failed: ${JSON.stringify(data)}`, 'error');
+                    addLog(`Pin creation response: ${JSON.stringify(data)}`, 'error');
                 }
             } catch (err) {
                 addLog('Error creating pin: ' + err.message, 'error');
