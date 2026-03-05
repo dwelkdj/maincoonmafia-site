@@ -102,7 +102,8 @@ app.get('/api/pinterest/boards', async (req, res) => {
     }
     
     try {
-        const resp = await fetch('https://api.pinterest.com/v5/boards', {
+        // Use sandbox API for trial access
+        const resp = await fetch('https://api-sandbox.pinterest.com/v5/boards', {
             headers: { 'Authorization': `Bearer ${req.session.pinterest_token}` }
         });
         const data = await resp.json();
@@ -121,7 +122,8 @@ app.post('/api/pinterest/pins', async (req, res) => {
     const { board_id, title, description, link, image_url } = req.body;
     
     try {
-        const resp = await fetch('https://api.pinterest.com/v5/pins', {
+        // Use sandbox API for trial access (switch to production after Standard approval)
+        const resp = await fetch('https://api-sandbox.pinterest.com/v5/pins', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${req.session.pinterest_token}`,
