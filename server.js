@@ -85,18 +85,7 @@ app.get('/auth/pinterest/callback', async (req, res) => {
         if (tokenData.access_token) {
             req.session.pinterest_token = tokenData.access_token;
             req.session.pinterest_scope = tokenData.scope;
-            // Show tokens for one-time copy (then store locally)
-            res.send(`<html><body style="background:#0a0a0a;color:#0f0;font-family:monospace;padding:2rem">
-                <h2>Pinterest OAuth Success!</h2>
-                <p><strong>Access Token:</strong></p>
-                <textarea rows="4" cols="80" style="background:#111;color:#0f0;border:1px solid #333;padding:8px;width:100%">${tokenData.access_token}</textarea>
-                <p><strong>Refresh Token:</strong></p>
-                <textarea rows="4" cols="80" style="background:#111;color:#0f0;border:1px solid #333;padding:8px;width:100%">${tokenData.refresh_token || 'none'}</textarea>
-                <p><strong>Scope:</strong> ${tokenData.scope}</p>
-                <p><strong>Expires in:</strong> ${tokenData.expires_in}s</p>
-                <p style="color:#f5c842;margin-top:1rem">Copy the access token and send it to your assistant. You won't need to do this again.</p>
-                <p><a href="/pinterest-demo" style="color:#f5c842">Back to Dashboard →</a></p>
-            </body></html>`);
+            res.redirect('/pinterest-demo?success=1');
         } else {
             console.error('Pinterest token exchange failed:', tokenData);
             res.redirect('/pinterest-demo?error=token_failed');
