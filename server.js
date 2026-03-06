@@ -287,6 +287,92 @@ app.post('/api/etsy/disconnect', (req, res) => {
     res.json({ ok: true });
 });
 
+// ============ Review System ============
+
+// In-memory review store (keyed by batch ID)
+const reviewBatches = {};
+
+// Create a new review batch (called by automation scripts)
+app.post('/api/review/batch', express.json(), (req, res) => {
+    const { pin, images, batchName } = req.body;
+    if (!pin || !images || !Array.isArray(images)) {
+        return res.status(400).json({ error: 'pin and images[] required' });
+    }
+    const batchId = require('crypto').randomBytes(5).toString('hex');
+    reviewBatches[batchId] = {
+        pin,
+        batchName: batchName || 'Mockup Review',
+        images: images.map((img, i) => ({
+            id: i,
+            url: img.url,
+            label: img.label || `Image ${i + 1}`,
+            design: img.design || '',
+            style: img.style || '',
+            status: 'pending' // pending | approved | rejected
+        })),
+        createdAt: new Date().toISOString(),
+        completedAt: null
+    };
+    res.json({ batchId, reviewUrl: `/review/${batchId}`, pinRequired: true });
+});
+
+// Get batch data (PIN required via query param)
+app.get('/api/review/:batchId', (req, res) => {
+    const batch = reviewBatches[req.params.batchId];
+    if (!batch) return res.status(404).json({ error: 'Batch not found' });
+    if (req.query.pin !== batch.pin) return res.status(401).json({ error: 'Invalid PIN' });
+    res.json({
+        batchName: batch.batchName,
+        images: batch.images,
+        createdAt: batch.createdAt,
+        completedAt: batch.completedAt
+    });
+});
+
+// Submit decisions
+app.post('/api/review/:batchId/submit', express.json(), (req, res) => {
+    const batch = reviewBatches[req.params.batchId];
+    if (!batch) return res.status(404).json({ error: 'Batch not found' });
+    if (req.body.pin !== batch.pin) return res.status(401).json({ error: 'Invalid PIN' });
+    
+    const { decisions } = req.body; // { "0": "approved", "1": "rejected", ... }
+    if (!decisions) return res.status(400).json({ error: 'decisions required' });
+    
+    for (const [id, status] of Object.entries(decisions)) {
+        const img = batch.images[parseInt(id)];
+        if (img && (status === 'approved' || status === 'rejected')) {
+            img.status = status;
+        }
+    }
+    
+    const allDecided = batch.images.every(img => img.status !== 'pending');
+    if (allDecided) batch.completedAt = new Date().toISOString();
+    
+    const approved = batch.images.filter(i => i.status === 'approved').length;
+    const rejected = batch.images.filter(i => i.status === 'rejected').length;
+    const pending = batch.images.filter(i => i.status === 'pending').length;
+    
+    res.json({ approved, rejected, pending, complete: allDecided });
+});
+
+// Get results (for automation to poll)
+app.get('/api/review/:batchId/results', (req, res) => {
+    const batch = reviewBatches[req.params.batchId];
+    if (!batch) return res.status(404).json({ error: 'Batch not found' });
+    // No PIN needed for results — only returns status, not image URLs
+    res.json({
+        complete: batch.completedAt !== null,
+        approved: batch.images.filter(i => i.status === 'approved').map(i => ({ id: i.id, label: i.label, design: i.design, style: i.style, url: i.url })),
+        rejected: batch.images.filter(i => i.status === 'rejected').map(i => ({ id: i.id, label: i.label, design: i.design, style: i.style })),
+        pending: batch.images.filter(i => i.status === 'pending').length
+    });
+});
+
+// Review page
+app.get('/review/:batchId', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'review.html'));
+});
+
 // ============ Pages ============
 
 app.get('/privacy', (req, res) => {
