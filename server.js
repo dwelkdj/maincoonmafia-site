@@ -387,6 +387,14 @@ app.get('/etsy-demo', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'etsy-demo.html'));
 });
 
+// Massage therapy demo
+app.get('/massage-demo', (req, res) => {
+    res.sendFile(path.join(__dirname, 'massage-demo', 'index.html'));
+});
+
+// Serve massage demo assets
+app.use('/massage-demo', express.static(path.join(__dirname, 'massage-demo')));
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
