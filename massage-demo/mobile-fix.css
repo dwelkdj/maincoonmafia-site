@@ -1,0 +1,274 @@
+/* Mobile Safari specific fixes - Load this after main CSS */
+
+/* Force mobile viewport */
+@viewport {
+    width: device-width;
+    zoom: 1.0;
+}
+
+/* Mobile-first aggressive styling */
+@media screen and (max-width: 768px) {
+    /* Hero section - mobile specific */
+    .hero {
+        background: linear-gradient(135deg, #2c5aa0 0%, #4a73c1 50%, #f5f7fa 100%) !important;
+        min-height: 80vh !important;
+        padding: 100px 20px 60px !important;
+    }
+    
+    .hero h1 {
+        color: #1e3f73 !important;
+        font-size: 2rem !important;
+        font-weight: 800 !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .hero-subtitle {
+        color: #555 !important;
+        font-size: 1.1rem !important;
+        margin-bottom: 1.5rem !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Credential badges - force styling */
+    .credential-badge {
+        background: #2c5aa0 !important;
+        color: white !important;
+        padding: 8px 16px !important;
+        border-radius: 20px !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+        display: inline-block !important;
+        margin: 0 4px 8px 0 !important;
+        box-shadow: 0 3px 10px rgba(44, 90, 160, 0.3) !important;
+    }
+    
+    /* Hero placeholder - mobile enhanced */
+    .hero-placeholder {
+        background: white !important;
+        border-radius: 20px !important;
+        padding: 2rem !important;
+        margin: 2rem auto !important;
+        width: 280px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+        border: 2px solid rgba(44, 90, 160, 0.1) !important;
+    }
+    
+    .doctor-avatar {
+        width: 100px !important;
+        height: 100px !important;
+        background: linear-gradient(135deg, #2c5aa0, #1e3f73) !important;
+        border-radius: 50% !important;
+        margin: 0 auto 1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 8px 20px rgba(44, 90, 160, 0.4) !important;
+    }
+    
+    .doctor-avatar i {
+        color: white !important;
+        font-size: 3rem !important;
+    }
+    
+    /* Buttons - enhanced mobile styling */
+    .btn-primary {
+        background: linear-gradient(135deg, #2c5aa0, #1e3f73) !important;
+        color: white !important;
+        padding: 14px 28px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 6px 20px rgba(44, 90, 160, 0.3) !important;
+        border: none !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        margin: 8px !important;
+    }
+    
+    .btn-outline {
+        background: transparent !important;
+        color: #2c5aa0 !important;
+        border: 2px solid #2c5aa0 !important;
+        padding: 12px 26px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        margin: 8px !important;
+    }
+    
+    /* Section headers - mobile enhanced */
+    .section-header h2 {
+        color: #1e3f73 !important;
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        margin-bottom: 1rem !important;
+        position: relative !important;
+    }
+    
+    .section-header h2::after {
+        content: '' !important;
+        position: absolute !important;
+        bottom: -8px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 50px !important;
+        height: 3px !important;
+        background: linear-gradient(90deg, #2c5aa0, #1e3f73) !important;
+        border-radius: 2px !important;
+    }
+    
+    /* Service cards - mobile enhanced */
+    .service-card {
+        background: white !important;
+        padding: 1.5rem !important;
+        margin: 1rem 0 !important;
+        border-radius: 15px !important;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+        border: 1px solid rgba(44, 90, 160, 0.1) !important;
+    }
+    
+    .service-icon {
+        width: 80px !important;
+        height: 80px !important;
+        background: linear-gradient(135deg, #2c5aa0, #1e3f73) !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 auto 1rem !important;
+        box-shadow: 0 6px 15px rgba(44, 90, 160, 0.3) !important;
+    }
+    
+    .service-icon i {
+        color: white !important;
+        font-size: 2rem !important;
+    }
+    
+    .service-card h3 {
+        color: #1e3f73 !important;
+        font-weight: 600 !important;
+        margin-bottom: 1rem !important;
+        text-align: center !important;
+    }
+    
+    /* Statistics - mobile enhanced */
+    .stat {
+        background: white !important;
+        padding: 1.5rem 1rem !important;
+        margin: 1rem 0 !important;
+        border-radius: 12px !important;
+        text-align: center !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1) !important;
+        border-top: 3px solid #2c5aa0 !important;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem !important;
+        font-weight: 800 !important;
+        color: #2c5aa0 !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .stat-label {
+        color: #666 !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        font-size: 0.8rem !important;
+        letter-spacing: 0.5px !important;
+    }
+    
+    /* Testimonials - mobile enhanced */
+    .testimonial {
+        background: white !important;
+        padding: 1.5rem !important;
+        margin: 1rem 0 !important;
+        border-radius: 15px !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1) !important;
+        border-left: 4px solid #2c5aa0 !important;
+    }
+    
+    /* Contact form - mobile enhanced */
+    .contact-form {
+        background: #f8f9fa !important;
+        padding: 1.5rem !important;
+        border-radius: 15px !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1) !important;
+        border-top: 3px solid #2c5aa0 !important;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100% !important;
+        padding: 12px !important;
+        border: 2px solid #ddd !important;
+        border-radius: 8px !important;
+        font-size: 16px !important; /* Prevent zoom on iOS */
+        margin-bottom: 1rem !important;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: #2c5aa0 !important;
+        outline: none !important;
+    }
+    
+    /* Footer - mobile enhanced */
+    .footer {
+        background: linear-gradient(135deg, #1e3f73, #2c5aa0) !important;
+        color: white !important;
+        padding: 2rem 1rem !important;
+    }
+    
+    /* General mobile improvements */
+    body {
+        font-size: 16px !important;
+        line-height: 1.5 !important;
+    }
+    
+    section {
+        padding: 3rem 1rem !important;
+    }
+    
+    .container {
+        max-width: 100% !important;
+        padding: 0 1rem !important;
+    }
+    
+    /* Hide desktop-only elements */
+    .nav {
+        display: none !important;
+    }
+    
+    .mobile-menu {
+        display: block !important;
+        color: #2c5aa0 !important;
+        font-size: 1.5rem !important;
+    }
+}
+
+/* iPhone specific fixes */
+@supports (-webkit-appearance: none) {
+    @media screen and (max-width: 768px) {
+        .hero,
+        .service-card,
+        .testimonial,
+        .stat,
+        .contact-form,
+        .hero-placeholder,
+        .btn-primary {
+            -webkit-transform: translateZ(0) !important;
+            transform: translateZ(0) !important;
+            will-change: transform !important;
+        }
+        
+        .btn-primary:hover,
+        .btn-primary:active {
+            transform: translateY(-2px) !important;
+            -webkit-transform: translateY(-2px) !important;
+        }
+    }
+}

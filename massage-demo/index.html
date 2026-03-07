@@ -2,11 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Advanced Pain Therapy & Clinical Massage | Dr. [Name] PT</title>
     <meta name="description" content="European-trained Physical Therapist specializing in advanced pain management through clinical massage therapy and manual techniques.">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile-fix.css">
+    
+    <!-- Critical mobile CSS for immediate rendering -->
+    <style>
+        @media (max-width: 768px) {
+            .hero { 
+                background: linear-gradient(135deg, #2c5aa0 0%, #4a73c1 50%, #f5f7fa 100%);
+                padding: 100px 20px 60px;
+                min-height: 80vh;
+            }
+            .hero h1 { 
+                color: #1e3f73; 
+                font-size: 2rem; 
+                font-weight: 800; 
+                text-align: center;
+            }
+            .credential-badge { 
+                background: #2c5aa0; 
+                color: white; 
+                padding: 8px 16px; 
+                border-radius: 20px; 
+                margin: 4px;
+                display: inline-block;
+                font-weight: 600;
+            }
+            .btn-primary {
+                background: linear-gradient(135deg, #2c5aa0, #1e3f73);
+                color: white;
+                padding: 14px 28px;
+                border-radius: 8px;
+                text-decoration: none;
+                display: inline-block;
+                margin: 8px;
+                font-weight: 600;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
