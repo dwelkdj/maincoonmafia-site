@@ -392,6 +392,11 @@ app.get('/massage-demo', (req, res) => {
     res.sendFile(path.join(__dirname, 'massage-demo', 'index.html'));
 });
 
+// Mobile-optimized version with inline styles
+app.get('/massage-demo/mobile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'massage-demo', 'mobile.html'));
+});
+
 // Serve massage demo assets
 app.use('/massage-demo', express.static(path.join(__dirname, 'massage-demo')));
 

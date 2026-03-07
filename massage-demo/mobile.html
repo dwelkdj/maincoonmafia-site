@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Advanced Pain Therapy & Clinical Massage | Dr. [Name] PT</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2c5aa0;
+        }
+
+        .logo i {
+            margin-right: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        .nav {
+            display: none;
+        }
+
+        .mobile-menu {
+            font-size: 1.5rem;
+            color: #2c5aa0;
+            cursor: pointer;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #2c5aa0 0%, #4a73c1 50%, #f5f7fa 100%);
+            padding: 120px 20px 80px;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #1e3f73;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .credentials-highlight {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .credential-badge {
+            background: #2c5aa0;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
+            display: inline-block;
+        }
+
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2c5aa0, #1e3f73);
+            color: white;
+            box-shadow: 0 6px 20px rgba(44, 90, 160, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(44, 90, 160, 0.5);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #2c5aa0;
+            border: 2px solid #2c5aa0;
+        }
+
+        .hero-placeholder {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem auto 0;
+            width: 300px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border: 2px solid rgba(44, 90, 160, 0.1);
+        }
+
+        .doctor-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #2c5aa0, #1e3f73);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 10px 25px rgba(44, 90, 160, 0.4);
+        }
+
+        .doctor-avatar i {
+            color: white;
+            font-size: 3.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .medical-icons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .medical-icons i {
+            font-size: 1.5rem;
+            color: #2c5aa0;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .hero-placeholder p {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1e3f73;
+            margin-bottom: 1rem;
+        }
+
+        .credentials-mini {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .credentials-mini span {
+            background: rgba(44, 90, 160, 0.1);
+            color: #1e3f73;
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(44, 90, 160, 0.2);
+        }
+
+        /* Sections */
+        section {
+            padding: 4rem 1rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+            color: #1e3f73;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-header h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #2c5aa0, #1e3f73);
+            border-radius: 2px;
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: #666;
+            margin-top: 1.5rem;
+        }
+
+        /* About Section */
+        .about {
+            background: white;
+        }
+
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .about h3 {
+            font-size: 1.5rem;
+            color: #1e3f73;
+            margin-bottom: 1rem;
+        }
+
+        .about p {
+            margin-bottom: 1rem;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        .features-list {
+            list-style: none;
+            margin: 2rem 0;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: #555;
+        }
+
+        .features-list i {
+            color: #2c5aa0;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .philosophy {
+            background: #f8f9fa;
+            border-left: 4px solid #2c5aa0;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: #1e3f73;
+            border-radius: 8px;
+        }
+
+        .about-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 3rem;
+            gap: 1rem;
+        }
+
+        .stat {
+            background: white;
+            padding: 1.5rem 1rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-top: 3px solid #2c5aa0;
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #2c5aa0;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Services */
+        .services {
+            background: #f8f9fa;
+        }
+
+        .services-grid {
+            display: grid;
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .service-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 1px solid rgba(44, 90, 160, 0.1);
+            text-align: center;
+        }
+
+        .service-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #2c5aa0, #1e3f73);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 8px 20px rgba(44, 90, 160, 0.3);
+        }
+
+        .service-icon i {
+            color: white;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .service-card h3 {
+            color: #1e3f73;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .service-card p {
+            color: #666;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Contact */
+        .contact {
+            background: white;
+        }
+
+        .contact-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .contact-form {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-top: 3px solid #2c5aa0;
+        }
+
+        .contact-form h4 {
+            color: #1e3f73;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #2c5aa0;
+            outline: none;
+        }
+
+        .contact-info {
+            margin-bottom: 2rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-item i {
+            color: #2c5aa0;
+            font-size: 1.3rem;
+            margin-right: 1rem;
+            margin-top: 0.2rem;
+        }
+
+        .contact-item strong {
+            color: #1e3f73;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(135deg, #1e3f73, #2c5aa0);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        .footer-brand .logo {
+            color: white;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .footer p {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i>
+                <span>Advanced Pain Therapy</span>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Clinical Pain Management Through Advanced Manual Therapy</h1>
+            <p class="hero-subtitle">European-trained Physical Therapist bringing advanced pain therapy techniques to your healing journey</p>
+            
+            <div class="credentials-highlight">
+                <span class="credential-badge">Licensed PT (Germany)</span>
+                <span class="credential-badge">Pain Specialist</span>
+                <span class="credential-badge">Manual Therapy Expert</span>
+            </div>
+            
+            <div class="hero-buttons">
+                <a href="#contact" class="btn btn-primary">Schedule Consultation</a>
+                <a href="#about" class="btn btn-outline">Learn More</a>
+            </div>
+            
+            <div class="hero-placeholder">
+                <div class="doctor-avatar">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="medical-icons">
+                    <i class="fas fa-heartbeat"></i>
+                    <i class="fas fa-hand-holding-medical"></i>
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <p>Professional Clinical Therapist</p>
+                <div class="credentials-mini">
+                    <span>PT (Germany)</span>
+                    <span>LMT (USA)</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="section-header">
+                <h2>Beyond Traditional Massage Therapy</h2>
+                <p>Clinical expertise meets compassionate care</p>
+            </div>
+            <div class="about-content">
+                <h3>From Physical Therapist to Advanced Manual Therapy Specialist</h3>
+                <p>After practicing as a licensed Physical Therapist in Germany's rigorous healthcare system, I've brought my clinical expertise to the United States through specialized massage therapy and manual treatment techniques.</p>
+                
+                <p>While navigating credential recognition between healthcare systems, I've discovered that hands-on manual therapy—the foundation of effective physical rehabilitation—transcends traditional boundaries. My approach combines:</p>
+                
+                <ul class="features-list">
+                    <li><i class="fas fa-check"></i> Advanced anatomical assessment techniques</li>
+                    <li><i class="fas fa-check"></i> European manual therapy protocols</li>
+                    <li><i class="fas fa-check"></i> Clinical pain management strategies</li>
+                    <li><i class="fas fa-check"></i> Evidence-based treatment planning</li>
+                    <li><i class="fas fa-check"></i> Postural rehabilitation methods</li>
+                </ul>
+
+                <blockquote class="philosophy">
+                    "True healing happens when clinical knowledge meets intuitive touch. Every session is a targeted intervention, not just relaxation."
+                </blockquote>
+
+                <div class="about-stats">
+                    <div class="stat">
+                        <div class="stat-number">8+</div>
+                        <div class="stat-label">Years Clinical Experience</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">500+</div>
+                        <div class="stat-label">Patients Treated</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">95%</div>
+                        <div class="stat-label">Pain Reduction Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <div class="section-header">
+                <h2>Specialized Treatment Protocols</h2>
+                <p>Clinical interventions tailored to your specific condition</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-spine"></i>
+                    </div>
+                    <h3>Chronic Pain Management</h3>
+                    <p>Advanced manual techniques for persistent pain conditions including fibromyalgia, chronic back pain, and nerve impingement syndromes.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-running"></i>
+                    </div>
+                    <h3>Sports Injury Rehabilitation</h3>
+                    <p>European-trained injury assessment and manual therapy protocols for athletes and active individuals.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-user-injured"></i>
+                    </div>
+                    <h3>Post-Surgical Recovery</h3>
+                    <p>Specialized manual therapy to optimize healing and restore function following orthopedic procedures.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>Neurological Conditions</h3>
+                    <p>Manual therapy interventions for stroke recovery, multiple sclerosis, and other neurological challenges.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="section-header">
+                <h2>Schedule Your Clinical Assessment</h2>
+                <p>Experience the difference clinical expertise makes</p>
+            </div>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h3>Advanced Pain Therapy Clinic</h3>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <strong>Location</strong>
+                            <p>123 Wellness Boulevard<br>Suite 250<br>Your City, State 12345</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <strong>Phone</strong>
+                            <p>(555) 123-4567</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <strong>Email</strong>
+                            <p>info@advancedpaintherapy.com</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="contact-form">
+                    <h4>Request Consultation</h4>
+                    <form>
+                        <div class="form-group">
+                            <input type="text" placeholder="Full Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" placeholder="Email Address" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" placeholder="Phone Number" required>
+                        </div>
+                        <div class="form-group">
+                            <select required>
+                                <option value="">Primary Concern</option>
+                                <option value="chronic-pain">Chronic Pain Management</option>
+                                <option value="sports-injury">Sports Injury</option>
+                                <option value="post-surgical">Post-Surgical Recovery</option>
+                                <option value="neurological">Neurological Condition</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <textarea placeholder="Brief description of your condition and goals" rows="4"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Schedule Consultation</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-brand">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Advanced Pain Therapy</span>
+                </div>
+                <p>European clinical expertise for your healing journey</p>
+                <p style="margin-top: 1rem; font-size: 0.8rem;">&copy; 2026 Advanced Pain Therapy. All rights reserved. | Licensed Massage Therapy Practice</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
