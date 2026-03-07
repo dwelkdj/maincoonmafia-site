@@ -11,6 +11,25 @@ body {
     color: #333;
     overflow-x: hidden;
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Safari/iOS specific fixes */
+@supports (-webkit-appearance: none) {
+    .hero-placeholder,
+    .service-card,
+    .testimonial,
+    .contact-form,
+    .stat {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    }
+    
+    .btn-primary {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    }
 }
 
 /* Page load animation */
@@ -37,6 +56,16 @@ section {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Force hardware acceleration for better performance */
+.service-card,
+.hero-placeholder,
+.testimonial,
+.stat,
+.btn-primary {
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 .container {
@@ -933,15 +962,41 @@ section {
     .hero-content {
         grid-template-columns: 1fr;
         text-align: center;
+        gap: 2rem;
     }
     
     .hero h1 {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
+        line-height: 1.3;
     }
     
     .hero-placeholder {
-        width: 300px;
-        height: 400px;
+        width: 280px;
+        height: 350px;
+        margin: 0 auto;
+        /* Keep all visual effects on mobile */
+        background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+        box-shadow: 
+            0 15px 35px rgba(0, 0, 0, 0.12),
+            0 0 0 1px rgba(44, 90, 160, 0.1);
+    }
+    
+    .doctor-avatar {
+        width: 100px;
+        height: 100px;
+        /* Keep gradients and shadows on mobile */
+        background: linear-gradient(135deg, #2c5aa0, #1e3f73);
+        box-shadow: 0 8px 25px rgba(44, 90, 160, 0.35);
+    }
+    
+    .doctor-avatar i {
+        font-size: 3.2rem;
+    }
+    
+    .medical-icons i {
+        font-size: 1.4rem;
+        /* Keep animations on mobile */
+        animation: pulse 2s ease-in-out infinite;
     }
     
     .about-content {
@@ -951,10 +1006,51 @@ section {
     .about-stats {
         flex-direction: row;
         justify-content: space-around;
+        gap: 1rem;
+    }
+    
+    .stat {
+        /* Keep visual effects on mobile */
+        background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+        box-shadow: 
+            0 8px 25px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        padding: 1.5rem 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        /* Keep gradient text on mobile */
+        background: linear-gradient(135deg, #2c5aa0 0%, #1e3f73 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
     .services-grid {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .service-card {
+        /* Keep enhanced styling on mobile */
+        background: white;
+        padding: 2rem;
+        box-shadow: 
+            0 8px 25px rgba(0, 0, 0, 0.1),
+            0 0 0 1px rgba(44, 90, 160, 0.05);
+    }
+    
+    .service-icon {
+        width: 80px;
+        height: 80px;
+        /* Keep gradients on mobile */
+        background: linear-gradient(135deg, #2c5aa0 0%, #4a73c1 50%, #1e3f73 100%);
+        box-shadow: 0 6px 18px rgba(44, 90, 160, 0.3);
+    }
+    
+    .service-icon i {
+        font-size: 1.8rem;
     }
     
     .credentials-content {
@@ -965,8 +1061,25 @@ section {
         grid-template-columns: 1fr;
     }
     
+    .testimonial {
+        /* Keep visual enhancements on mobile */
+        box-shadow: 
+            0 8px 25px rgba(0, 0, 0, 0.1),
+            0 0 0 1px rgba(44, 90, 160, 0.05);
+        padding: 2rem;
+    }
+    
     .contact-content {
         grid-template-columns: 1fr;
+    }
+    
+    .contact-form {
+        /* Keep gradient background on mobile */
+        background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%);
+        box-shadow: 
+            0 12px 30px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        padding: 2rem;
     }
     
     .footer-content {
@@ -980,29 +1093,141 @@ section {
     
     .hero-buttons {
         justify-content: center;
+        gap: 1rem;
     }
-}
-
-@media (max-width: 480px) {
-    .hero h1 {
-        font-size: 2rem;
+    
+    .btn {
+        padding: 14px 28px;
+        font-size: 1rem;
+    }
+    
+    /* Mobile-specific enhancements */
+    .hero::before {
+        /* Keep animated background on mobile */
+        animation: float 8s ease-in-out infinite;
     }
     
     .section-header h2 {
         font-size: 2rem;
     }
     
+    .section-header h2::after {
+        /* Keep accent line on mobile */
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, #2c5aa0, #1e3f73);
+    }
+}
+
+@media (max-width: 480px) {
+    .hero h1 {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.8rem;
+    }
+    
     .container {
         padding: 0 15px;
     }
     
-    .service-card,
+    .service-card {
+        padding: 1.8rem;
+        /* Enhance mobile cards further */
+        background: white;
+        border-radius: 18px;
+        box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.12),
+            0 0 0 1px rgba(44, 90, 160, 0.08);
+    }
+    
     .contact-form {
-        padding: 1.5rem;
+        padding: 2rem;
+        border-radius: 18px;
     }
     
     .credential-badge {
         font-size: 0.8rem;
         padding: 0.4rem 0.8rem;
+        /* Keep visual effects on small screens */
+        background: #2c5aa0;
+        color: white;
+        box-shadow: 0 2px 8px rgba(44, 90, 160, 0.3);
+    }
+    
+    .hero-placeholder {
+        width: 260px;
+        height: 320px;
+        /* Enhanced mobile styling */
+        background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+        box-shadow: 
+            0 12px 30px rgba(0, 0, 0, 0.15),
+            0 0 0 1px rgba(44, 90, 160, 0.12);
+        border-radius: 18px;
+    }
+    
+    .doctor-avatar {
+        width: 90px;
+        height: 90px;
+        margin-bottom: 1rem;
+    }
+    
+    .doctor-avatar i {
+        font-size: 2.8rem;
+    }
+    
+    .medical-icons {
+        gap: 1rem;
+    }
+    
+    .medical-icons i {
+        font-size: 1.2rem;
+    }
+    
+    .stat {
+        padding: 1.2rem 0.8rem;
+        border-radius: 12px;
+    }
+    
+    .stat-number {
+        font-size: 2.2rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    /* Improve mobile performance */
+    .hero::before,
+    .services::before,
+    .about::before {
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    /* Enhance mobile buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, #2c5aa0 0%, #1e3f73 100%);
+        box-shadow: 0 6px 20px rgba(44, 90, 160, 0.35);
+        border-radius: 8px;
+    }
+    
+    /* Mobile-optimized testimonials */
+    .testimonial {
+        padding: 1.8rem;
+        border-radius: 16px;
+    }
+    
+    .testimonial::before {
+        font-size: 6rem;
+        top: -5px;
+        left: 15px;
     }
 }
