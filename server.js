@@ -387,8 +387,15 @@ app.get('/etsy-demo', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'etsy-demo.html'));
 });
 
-// Massage therapy demo
+// Serve massage demo static assets from /massage-demo/assets/*
+app.use('/massage-demo/assets', express.static(path.join(__dirname, 'massage-demo')));
+
+// Massage therapy demo routes
 app.get('/massage-demo', (req, res) => {
+    res.sendFile(path.join(__dirname, 'massage-demo', 'index.html'));
+});
+
+app.get('/massage-demo/', (req, res) => {
     res.sendFile(path.join(__dirname, 'massage-demo', 'index.html'));
 });
 
@@ -396,9 +403,6 @@ app.get('/massage-demo', (req, res) => {
 app.get('/massage-demo/mobile', (req, res) => {
     res.sendFile(path.join(__dirname, 'massage-demo', 'mobile.html'));
 });
-
-// Serve massage demo assets
-app.use('/massage-demo', express.static(path.join(__dirname, 'massage-demo')));
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
