@@ -404,6 +404,11 @@ app.get('/massage-demo/mobile', (req, res) => {
     res.sendFile(path.join(__dirname, 'massage-demo', 'mobile.html'));
 });
 
+// Fully inline version (all CSS embedded in HTML)
+app.get('/massage-demo/inline', (req, res) => {
+    res.sendFile(path.join(__dirname, 'massage-demo', 'inline.html'));
+});
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
