@@ -20,7 +20,7 @@ const ETSY_SCOPES = 'shops_r shops_w listings_r listings_w listings_d images_r i
 const sessions = {};
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Simple session middleware
