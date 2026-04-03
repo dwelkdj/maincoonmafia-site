@@ -292,6 +292,9 @@ app.post('/api/etsy/disconnect', (req, res) => {
 // In-memory review store (keyed by batch ID)
 const reviewBatches = {};
 
+// TODO: Consider using a persistent store (Redis, SQLite, or file-based)
+// Current limitation: batches are lost on server restart/redeploy
+
 // Create a new review batch (called by automation scripts)
 app.post('/api/review/batch', express.json(), (req, res) => {
     const { pin, images, batchName } = req.body;
@@ -366,6 +369,31 @@ app.get('/api/review/:batchId/results', (req, res) => {
         rejected: batch.images.filter(i => i.status === 'rejected').map(i => ({ id: i.id, label: i.label, design: i.design, style: i.style })),
         pending: batch.images.filter(i => i.status === 'pending').length
     });
+});
+
+// POST new batch from base64 designs
+app.post('/review/new-batch', express.json({limit: "10mb"}), (req, res) => {
+    const {designs, batchName} = req.body;
+    if (!designs || !Array.isArray(designs) || designs.length === 0) {
+        return res.status(400).json({error: "designs array required"});
+    }
+    const batchId = crypto.randomBytes(8).toString('hex');
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    reviewBatches[batchId] = {
+        pin,
+        batchName: batchName || "Test Batch",
+        images: designs.map((d, i) => ({
+            id: i,
+            url: d.image,
+            label: d.name || `Design ${i+1}`,
+            design: d.prompt || "",
+            style: "",
+            status: 'pending'
+        })),
+        createdAt: new Date().toISOString(),
+        completedAt: null
+    };
+    res.json({batchId, pin});
 });
 
 // Review page
