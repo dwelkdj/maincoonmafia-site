@@ -356,6 +356,23 @@ app.post('/api/review/:batchId/submit', express.json(), (req, res) => {
     const pending = batch.images.filter(i => i.status === 'pending').length;
     
     res.json({ approved, rejected, pending, complete: allDecided });
+
+    // Fire webhook to VPS pipeline when all designs are decided
+    if (allDecided && approved > 0) {
+        const approvedDesigns = batch.images.filter(i => i.status === 'approved');
+        const webhookUrl = process.env.POD_WEBHOOK_URL || 'http://5.78.126.119:9478/webhook';
+        const webhookSecret = process.env.POD_WEBHOOK_SECRET || 'a34c379b00afa429b2813a3b56aa8a53fc9016f66fd73571384dc81facfacca9';
+        fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                secret: webhookSecret,
+                batchId: req.params.batchId,
+                approved: approvedDesigns.map(i => ({ id: i.id, label: i.label, url: i.url })),
+            }),
+        }).then(r => console.log(`Webhook fired: ${r.status}`))
+          .catch(e => console.error(`Webhook failed: ${e.message}`));
+    }
 });
 
 // Get results (for automation to poll)
