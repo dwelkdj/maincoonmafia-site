@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -289,11 +290,27 @@ app.post('/api/etsy/disconnect', (req, res) => {
 
 // ============ Review System ============
 
-// In-memory review store (keyed by batch ID)
-const reviewBatches = {};
+// File-based review store — survives server restarts
+const BATCHES_DIR = path.join(__dirname, 'data', 'batches');
+fs.mkdirSync(BATCHES_DIR, { recursive: true });
 
-// TODO: Consider using a persistent store (Redis, SQLite, or file-based)
-// Current limitation: batches are lost on server restart/redeploy
+function batchPath(batchId) {
+    // Sanitize batchId to prevent path traversal
+    if (!/^[a-f0-9]+$/.test(batchId)) throw new Error('Invalid batchId');
+    return path.join(BATCHES_DIR, `${batchId}.json`);
+}
+
+function loadBatch(batchId) {
+    try {
+        return JSON.parse(fs.readFileSync(batchPath(batchId), 'utf8'));
+    } catch {
+        return null;
+    }
+}
+
+function saveBatch(batchId, batch) {
+    fs.writeFileSync(batchPath(batchId), JSON.stringify(batch, null, 2));
+}
 
 // Create a new review batch (called by automation scripts)
 app.post('/api/review/batch', express.json(), (req, res) => {
@@ -301,8 +318,8 @@ app.post('/api/review/batch', express.json(), (req, res) => {
     if (!pin || !images || !Array.isArray(images)) {
         return res.status(400).json({ error: 'pin and images[] required' });
     }
-    const batchId = require('crypto').randomBytes(5).toString('hex');
-    reviewBatches[batchId] = {
+    const batchId = crypto.randomBytes(5).toString('hex');
+    const batch = {
         pin,
         batchName: batchName || 'Mockup Review',
         images: images.map((img, i) => ({
@@ -316,12 +333,13 @@ app.post('/api/review/batch', express.json(), (req, res) => {
         createdAt: new Date().toISOString(),
         completedAt: null
     };
+    saveBatch(batchId, batch);
     res.json({ batchId, reviewUrl: `/review/${batchId}`, pinRequired: true });
 });
 
 // Get batch data (PIN required via query param)
 app.get('/api/review/:batchId', (req, res) => {
-    const batch = reviewBatches[req.params.batchId];
+    const batch = loadBatch(req.params.batchId);
     if (!batch) return res.status(404).json({ error: 'Batch not found' });
     if (req.query.pin !== batch.pin) return res.status(401).json({ error: 'Invalid PIN' });
     res.json({
@@ -334,10 +352,10 @@ app.get('/api/review/:batchId', (req, res) => {
 
 // Submit decisions
 app.post('/api/review/:batchId/submit', express.json(), (req, res) => {
-    const batch = reviewBatches[req.params.batchId];
+    const batch = loadBatch(req.params.batchId);
     if (!batch) return res.status(404).json({ error: 'Batch not found' });
     if (req.body.pin !== batch.pin) return res.status(401).json({ error: 'Invalid PIN' });
-    
+
     const { decisions, reasons } = req.body; // { "0": "approved", "1": "rejected", ... }
     if (!decisions) return res.status(400).json({ error: 'decisions required' });
 
@@ -350,14 +368,16 @@ app.post('/api/review/:batchId/submit', express.json(), (req, res) => {
             }
         }
     }
-    
+
     const allDecided = batch.images.every(img => img.status !== 'pending');
     if (allDecided) batch.completedAt = new Date().toISOString();
-    
+
+    saveBatch(req.params.batchId, batch);
+
     const approved = batch.images.filter(i => i.status === 'approved').length;
     const rejected = batch.images.filter(i => i.status === 'rejected').length;
     const pending = batch.images.filter(i => i.status === 'pending').length;
-    
+
     res.json({ approved, rejected, pending, complete: allDecided });
 
     // Fire webhook to VPS pipeline when all designs are decided
@@ -380,7 +400,7 @@ app.post('/api/review/:batchId/submit', express.json(), (req, res) => {
 
 // Get results (for automation to poll)
 app.get('/api/review/:batchId/results', (req, res) => {
-    const batch = reviewBatches[req.params.batchId];
+    const batch = loadBatch(req.params.batchId);
     if (!batch) return res.status(404).json({ error: 'Batch not found' });
     // No PIN needed for results — only returns status, not image URLs
     res.json({
@@ -399,7 +419,7 @@ app.post('/review/new-batch', express.json({limit: "10mb"}), (req, res) => {
     }
     const batchId = crypto.randomBytes(8).toString('hex');
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
-    reviewBatches[batchId] = {
+    const batch = {
         pin,
         batchName: batchName || "Test Batch",
         images: designs.map((d, i) => ({
@@ -413,6 +433,7 @@ app.post('/review/new-batch', express.json({limit: "10mb"}), (req, res) => {
         createdAt: new Date().toISOString(),
         completedAt: null
     };
+    saveBatch(batchId, batch);
     res.json({batchId, pin});
 });
 
