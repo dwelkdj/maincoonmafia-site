@@ -76,6 +76,19 @@ body { background: #0a0a0a; color: #f0f0f0; font-family: -apple-system, BlinkMac
 .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; display: none; z-index: 200; }
 .toast.approve { background: #4ade80; color: #000; }
 .toast.reject { background: #f87171; color: #000; }
+
+/* Rejection reason modal */
+.reject-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 300; align-items: center; justify-content: center; }
+.reject-modal.active { display: flex; }
+.reject-modal-box { background: #1a1a1a; border: 2px solid #f87171; border-radius: 12px; padding: 1.5rem; width: min(420px, 90vw); display: flex; flex-direction: column; gap: 1rem; }
+.reject-modal-box h3 { color: #f87171; font-size: 1rem; margin: 0; }
+.reject-reason-input { background: #0d0d0d; border: 1px solid #444; border-radius: 8px; color: #f0f0f0; font-size: 0.9rem; padding: 0.7rem 0.9rem; resize: vertical; min-height: 80px; width: 100%; font-family: inherit; }
+.reject-reason-input:focus { outline: none; border-color: #f87171; }
+.reject-modal-actions { display: flex; gap: 0.75rem; }
+.btn-cancel-reject { flex: 1; background: #2a2a2a; color: #aaa; border: 1px solid #444; border-radius: 8px; padding: 0.65rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.btn-cancel-reject:hover { background: #333; }
+.btn-confirm-reject { flex: 2; background: #f87171; color: #000; border: none; border-radius: 8px; padding: 0.65rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+.btn-confirm-reject:hover { background: #f95959; }
 </style>
 </head>
 <body>
@@ -106,6 +119,17 @@ body { background: #0a0a0a; color: #f0f0f0; font-family: -apple-system, BlinkMac
     </div>
 </div>
 
+<div class="reject-modal" id="rejectModal">
+    <div class="reject-modal-box">
+        <h3>✗ Reject this design</h3>
+        <textarea class="reject-reason-input" id="rejectReasonInput" placeholder="Why are you rejecting this? (optional)" rows="3"></textarea>
+        <div class="reject-modal-actions">
+            <button class="btn-cancel-reject" onclick="cancelReject()">Cancel</button>
+            <button class="btn-confirm-reject" onclick="confirmReject()">Confirm Reject</button>
+        </div>
+    </div>
+</div>
+
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
     <span class="lightbox-close">&times;</span>
     <img id="lightboxImg">
@@ -117,6 +141,7 @@ body { background: #0a0a0a; color: #f0f0f0; font-family: -apple-system, BlinkMac
 const batchId = window.location.pathname.split('/review/')[1];
 let pin = '';
 let images = [];
+let pendingRejectId = null;
 
 document.getElementById('pinInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitPin(); });
 
@@ -154,10 +179,36 @@ function renderGrid() {
     `).join('');
 }
 
-async function decide(id, status) {
+function decide(id, status) {
+    if (status === 'rejected') {
+        pendingRejectId = id;
+        document.getElementById('rejectReasonInput').value = '';
+        document.getElementById('rejectModal').classList.add('active');
+        setTimeout(() => document.getElementById('rejectReasonInput').focus(), 50);
+        return;
+    }
+    submitDecision(id, 'approved', '');
+}
+
+function cancelReject() {
+    pendingRejectId = null;
+    document.getElementById('rejectModal').classList.remove('active');
+}
+
+function confirmReject() {
+    if (pendingRejectId === null) return;
+    const reason = document.getElementById('rejectReasonInput').value.trim();
+    const id = pendingRejectId;
+    pendingRejectId = null;
+    document.getElementById('rejectModal').classList.remove('active');
+    submitDecision(id, 'rejected', reason);
+}
+
+async function submitDecision(id, status, reason) {
     images[id].status = status;
+    if (reason) images[id].reason = reason;
     const card = document.getElementById(`card-${id}`);
-    
+
     if (status === 'approved') {
         card.className = 'card approved';
         card.querySelector('.card-actions').style.display = 'none';
@@ -168,16 +219,16 @@ async function decide(id, status) {
         card.style.opacity = '0';
         setTimeout(() => { card.className = 'card rejected'; }, 350);
     }
-    
+
     updateProgress();
-    
+
     // Auto-submit this decision
     await fetch(`/api/review/${batchId}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin, decisions: { [id]: status } })
+        body: JSON.stringify({ pin, decisions: { [id]: status }, reasons: { [id]: reason } })
     });
-    
+
     // Check if all done
     const pending = images.filter(i => i.status === 'pending').length;
     if (pending === 0) {
@@ -216,7 +267,15 @@ function toast(msg, type) {
     setTimeout(() => t.style.display = 'none', 1500);
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeLightbox();
+        cancelReject();
+    }
+    if (e.key === 'Enter' && document.getElementById('rejectModal').classList.contains('active')) {
+        if (e.ctrlKey || e.metaKey) confirmReject();
+    }
+});
 </script>
 </body>
 </html>

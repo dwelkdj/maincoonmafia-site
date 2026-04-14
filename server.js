@@ -338,13 +338,16 @@ app.post('/api/review/:batchId/submit', express.json(), (req, res) => {
     if (!batch) return res.status(404).json({ error: 'Batch not found' });
     if (req.body.pin !== batch.pin) return res.status(401).json({ error: 'Invalid PIN' });
     
-    const { decisions } = req.body; // { "0": "approved", "1": "rejected", ... }
+    const { decisions, reasons } = req.body; // { "0": "approved", "1": "rejected", ... }
     if (!decisions) return res.status(400).json({ error: 'decisions required' });
-    
+
     for (const [id, status] of Object.entries(decisions)) {
         const img = batch.images[parseInt(id)];
         if (img && (status === 'approved' || status === 'rejected')) {
             img.status = status;
+            if (status === 'rejected' && reasons && reasons[id]) {
+                img.reason = reasons[id].trim().slice(0, 500); // cap at 500 chars
+            }
         }
     }
     
@@ -383,7 +386,7 @@ app.get('/api/review/:batchId/results', (req, res) => {
     res.json({
         complete: batch.completedAt !== null,
         approved: batch.images.filter(i => i.status === 'approved').map(i => ({ id: i.id, label: i.label, design: i.design, style: i.style, url: i.url })),
-        rejected: batch.images.filter(i => i.status === 'rejected').map(i => ({ id: i.id, label: i.label, design: i.design, style: i.style })),
+        rejected: batch.images.filter(i => i.status === 'rejected').map(i => ({ id: i.id, label: i.label, design: i.design, style: i.style, reason: i.reason || null })),
         pending: batch.images.filter(i => i.status === 'pending').length
     });
 });
