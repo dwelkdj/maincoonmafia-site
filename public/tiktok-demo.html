@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaineCoonMafia — TikTok Content Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; min-height: 100vh; }
+
+        .header { background: #111; border-bottom: 1px solid #222; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 20px; color: #fff; }
+        .header h1 span { color: #fe2c55; }
+        .header .account { display: flex; align-items: center; gap: 12px; }
+        .header .account img { width: 32px; height: 32px; border-radius: 50%; }
+        .header .account .name { font-size: 14px; color: #aaa; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 32px; }
+
+        .status-bar { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; }
+        .status-bar .left { display: flex; align-items: center; gap: 12px; }
+        .status-bar .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.green { background: #00c853; box-shadow: 0 0 8px #00c85366; }
+        .dot.yellow { background: #ffc107; box-shadow: 0 0 8px #ffc10766; }
+        .status-bar .text { font-size: 14px; }
+        .btn { padding: 8px 20px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #fe2c55; color: #fff; }
+        .btn-primary:hover { background: #e0264c; }
+        .btn-outline { background: transparent; border: 1px solid #444; color: #ccc; }
+        .btn-outline:hover { border-color: #fe2c55; color: #fe2c55; }
+        .btn-success { background: #00c853; color: #fff; }
+
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #fff; }
+
+        .scopes { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
+        .scope-list { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+        .scope-tag { background: #222; border: 1px solid #333; padding: 6px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .scope-tag .check { color: #00c853; }
+
+        .content-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+        .content-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; transition: border-color 0.2s; }
+        .content-card:hover { border-color: #fe2c55; }
+        .content-card.selected { border-color: #fe2c55; box-shadow: 0 0 0 2px #fe2c5533; }
+        .content-card .preview { width: 100%; aspect-ratio: 9/16; background: #222; display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; overflow: hidden; }
+        .content-card .preview img { width: 100%; height: 100%; object-fit: cover; }
+        .content-card .preview .overlay { position: absolute; top: 8px; right: 8px; background: #00c85399; color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 4px; display: none; }
+        .content-card.selected .preview .overlay { display: block; }
+        .content-card .info { padding: 12px; }
+        .content-card .info .title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .content-card .info .meta { font-size: 12px; color: #888; }
+
+        .post-controls { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
+        .post-form { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+        .post-form textarea { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; color: #e0e0e0; font-size: 14px; resize: vertical; min-height: 80px; font-family: inherit; }
+        .post-form textarea:focus { outline: none; border-color: #fe2c55; }
+        .post-form .actions { display: flex; gap: 12px; align-items: center; }
+
+        .activity-log { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; }
+        .log-entry { padding: 10px 0; border-bottom: 1px solid #222; font-size: 13px; display: flex; align-items: center; gap: 10px; }
+        .log-entry:last-child { border-bottom: none; }
+        .log-entry .time { color: #666; min-width: 140px; }
+        .log-entry .status { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .log-entry .status.success { background: #00c85322; color: #00c853; }
+        .log-entry .status.pending { background: #ffc10722; color: #ffc107; }
+        .log-entry .status.info { background: #2196f322; color: #2196f3; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1a1a1a; border: 1px solid #333; border-radius: 16px; padding: 32px; max-width: 500px; width: 90%; text-align: center; }
+        .modal h2 { margin-bottom: 12px; }
+        .modal p { color: #999; margin-bottom: 24px; font-size: 14px; }
+        .modal .btn { margin: 0 8px; }
+
+        .progress-bar { height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-top: 12px; }
+        .progress-bar .fill { height: 100%; background: linear-gradient(90deg, #fe2c55, #ff6b81); border-radius: 2px; transition: width 0.5s; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Maine<span>Coon</span>Mafia — TikTok Content Manager</h1>
+        <div class="account">
+            <div class="name">@mainecoonmafia</div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#fe2c55;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;">M</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Connection Status -->
+        <div class="status-bar">
+            <div class="left">
+                <div class="dot green"></div>
+                <span class="text"><strong>TikTok Connected</strong> — Authorized via OAuth 2.0 with PKCE</span>
+            </div>
+            <button class="btn btn-outline" onclick="showDisconnectModal()">Disconnect</button>
+        </div>
+
+        <!-- Active Scopes -->
+        <div class="scopes">
+            <div class="section-title">Authorized Scopes</div>
+            <div class="scope-list">
+                <div class="scope-tag"><span class="check">✓</span> video.upload</div>
+                <div class="scope-tag"><span class="check">✓</span> video.publish</div>
+                <div class="scope-tag"><span class="check">✓</span> user.info.basic</div>
+            </div>
+        </div>
+
+        <!-- Content Queue -->
+        <div class="section-title">Content Queue — Select designs to post</div>
+        <div class="content-grid">
+            <div class="content-card selected" onclick="toggleSelect(this)">
+                <div class="preview" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">
+                    <div style="font-size:64px">🐱</div>
+                    <div class="overlay">✓ Selected</div>
+                </div>
+                <div class="info">
+                    <div class="title">Mafia Boss Tuxedo</div>
+                    <div class="meta">Slideshow • 31s • 21 designs</div>
+                </div>
+            </div>
+            <div class="content-card" onclick="toggleSelect(this)">
+                <div class="preview" style="background: linear-gradient(135deg, #2d1b30, #1a1a2e);">
+                    <div style="font-size:64px">😼</div>
+                    <div class="overlay">✓ Selected</div>
+                </div>
+                <div class="info">
+                    <div class="title">Whisker Gentleman</div>
+                    <div class="meta">Carousel • 5 images</div>
+                </div>
+            </div>
+            <div class="content-card" onclick="toggleSelect(this)">
+                <div class="preview" style="background: linear-gradient(135deg, #1b2d1b, #1a1a2e);">
+                    <div style="font-size:64px">😸</div>
+                    <div class="overlay">✓ Selected</div>
+                </div>
+                <div class="info">
+                    <div class="title">Seasonal Collection</div>
+                    <div class="meta">Slideshow • 15s • 8 designs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Post Controls -->
+        <div class="post-controls">
+            <div class="section-title">Post Settings</div>
+            <div class="post-form">
+                <textarea placeholder="Caption... #MaineCoon #CatLovers #POD #MaineCoonMafia">Which design is your favorite? 🐱👑 Comment below!
+
+🛒 Link in bio for all designs
+#MaineCoon #MaineCoonLovers #CatDesigns #PrintOnDemand #MaineCoonMafia #CatMom #CatDad #Cats #POD</textarea>
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="simulatePost()">📤 Upload & Publish to TikTok</button>
+                    <button class="btn btn-outline">Schedule for Later</button>
+                    <span style="color:#666; font-size:13px; margin-left:auto;">Using: Content Posting API → video.upload → video.publish</span>
+                </div>
+                <div class="progress-bar" id="progressBar" style="display:none;">
+                    <div class="fill" id="progressFill" style="width:0%"></div>
+                </div>
+                <div id="postStatus" style="font-size:13px; color:#00c853; display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="activity-log">
+            <div class="section-title">Recent Activity</div>
+            <div class="log-entry">
+                <span class="time">2026-04-15 00:08</span>
+                <span class="status success">PUBLISHED</span>
+                <span>Mafia Boss Tuxedo slideshow — 31s, 21 designs</span>
+            </div>
+            <div class="log-entry">
+                <span class="time">2026-04-14 18:30</span>
+                <span class="status success">UPLOADED</span>
+                <span>Video uploaded via Content Posting API (video.upload)</span>
+            </div>
+            <div class="log-entry">
+                <span class="time">2026-04-14 18:29</span>
+                <span class="status info">AUTH</span>
+                <span>OAuth 2.0 token refreshed (expires in 86400s)</span>
+            </div>
+            <div class="log-entry">
+                <span class="time">2026-04-13 21:00</span>
+                <span class="status success">PUBLISHED</span>
+                <span>Whisker Gentleman carousel — 5 images</span>
+            </div>
+            <div class="log-entry">
+                <span class="time">2026-04-13 12:00</span>
+                <span class="status info">CONNECTED</span>
+                <span>TikTok account @mainecoonmafia authorized (user.info.basic verified)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disconnect Modal -->
+    <div class="modal-overlay" id="disconnectModal">
+        <div class="modal">
+            <h2>Disconnect TikTok?</h2>
+            <p>This will revoke the OAuth tokens and stop automated posting. You can reconnect anytime.</p>
+            <button class="btn btn-outline" onclick="hideDisconnectModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="hideDisconnectModal()">Disconnect</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleSelect(card) {
+            card.classList.toggle('selected');
+        }
+
+        function showDisconnectModal() {
+            document.getElementById('disconnectModal').classList.add('active');
+        }
+
+        function hideDisconnectModal() {
+            document.getElementById('disconnectModal').classList.remove('active');
+        }
+
+        function simulatePost() {
+            const bar = document.getElementById('progressBar');
+            const fill = document.getElementById('progressFill');
+            const status = document.getElementById('postStatus');
+
+            bar.style.display = 'block';
+            status.style.display = 'block';
+
+            // Simulate upload progress
+            const steps = [
+                { pct: 15, msg: '🔐 Validating OAuth token (user.info.basic)...', delay: 500 },
+                { pct: 30, msg: '📦 Preparing video for upload...', delay: 1000 },
+                { pct: 55, msg: '📤 Uploading via Content Posting API (video.upload)...', delay: 1500 },
+                { pct: 75, msg: '⏳ Processing on TikTok servers...', delay: 2000 },
+                { pct: 90, msg: '📢 Publishing to @mainecoonmafia (video.publish)...', delay: 1000 },
+                { pct: 100, msg: '✅ Published successfully! Video is now live on TikTok.', delay: 500 },
+            ];
+
+            let totalDelay = 0;
+            steps.forEach(step => {
+                totalDelay += step.delay;
+                setTimeout(() => {
+                    fill.style.width = step.pct + '%';
+                    status.textContent = step.msg;
+                    if (step.pct === 100) {
+                        status.style.color = '#00c853';
+                    } else {
+                        status.style.color = '#ffc107';
+                    }
+                }, totalDelay);
+            });
+        }
+    </script>
+</body>
+</html>
