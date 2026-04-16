@@ -291,7 +291,7 @@ app.post('/api/etsy/disconnect', (req, res) => {
 // ============ Review System ============
 
 // File-based review store — survives server restarts
-const BATCHES_DIR = path.join(__dirname, 'data', 'batches');
+const BATCHES_DIR = process.env.BATCHES_DIR || path.join(__dirname, 'data', 'batches');
 fs.mkdirSync(BATCHES_DIR, { recursive: true });
 
 function batchPath(batchId) {
