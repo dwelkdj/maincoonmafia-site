@@ -292,6 +292,17 @@ app.post('/api/etsy/disconnect', (req, res) => {
 
 // File-based review store — survives server restarts
 const BATCHES_DIR = process.env.BATCHES_DIR || path.join(__dirname, 'data', 'batches');
+const EXPECTED_PERSISTENT_PREFIX = '/var/data';
+
+// ============ Startup Health Check: Persistent Storage ============
+if (!BATCHES_DIR.startsWith(EXPECTED_PERSISTENT_PREFIX)) {
+    console.warn(`[STORAGE WARNING] BATCHES_DIR="${BATCHES_DIR}" does not start with "${EXPECTED_PERSISTENT_PREFIX}".`);
+    console.warn(`[STORAGE WARNING] Batch files may be on an EPHEMERAL filesystem and will be lost on restart.`);
+    console.warn(`[STORAGE WARNING] Set BATCHES_DIR=/var/data/batches (or equivalent persistent mount) to avoid data loss.`);
+} else {
+    console.log(`[STORAGE OK] BATCHES_DIR="${BATCHES_DIR}" resolves to persistent disk. Batches will survive restarts.`);
+}
+
 fs.mkdirSync(BATCHES_DIR, { recursive: true });
 
 function batchPath(batchId) {
@@ -312,6 +323,74 @@ function saveBatch(batchId, batch) {
     fs.writeFileSync(batchPath(batchId), JSON.stringify(batch, null, 2));
 }
 
+// ============ Webhook Firing with Retry ============
+
+async function fireWebhook(batchId, approvedDesigns, attempt = 1) {
+    const MAX_ATTEMPTS = 3;
+    const webhookUrl = process.env.POD_WEBHOOK_URL || 'http://5.78.126.119:9478/webhook';
+    const webhookSecret = process.env.POD_WEBHOOK_SECRET || 'a34c379b00afa429b2813a3b56aa8a53fc9016f66fd73571384dc81facfacca9';
+
+    try {
+        const r = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                secret: webhookSecret,
+                batchId,
+                approved: approvedDesigns.map(i => ({ id: i.id, label: i.label, url: i.url })),
+            }),
+        });
+        if (r.ok || r.status < 500) {
+            console.log(`[WEBHOOK] Fired batch ${batchId} on attempt ${attempt}: HTTP ${r.status}`);
+            const b = loadBatch(batchId);
+            if (b) { b.webhookStatus = 'sent'; saveBatch(batchId, b); }
+        } else {
+            throw new Error(`HTTP ${r.status}`);
+        }
+    } catch (e) {
+        console.error(`[WEBHOOK] Attempt ${attempt}/${MAX_ATTEMPTS} failed for batch ${batchId}: ${e.message}`);
+        if (attempt < MAX_ATTEMPTS) {
+            const delay = Math.pow(2, attempt) * 1000; // 2s, 4s
+            console.log(`[WEBHOOK] Retrying batch ${batchId} in ${delay}ms...`);
+            setTimeout(() => fireWebhook(batchId, approvedDesigns, attempt + 1), delay);
+        } else {
+            console.error(`[WEBHOOK] All ${MAX_ATTEMPTS} attempts failed for batch ${batchId}. Marking webhookStatus=failed.`);
+            const b = loadBatch(batchId);
+            if (b) { b.webhookStatus = 'failed'; saveBatch(batchId, b); }
+        }
+    }
+}
+
+// ============ Daily Cleanup Job (7-day retention) ============
+
+function runBatchCleanup() {
+    const cutoffMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    let deleted = 0;
+    try {
+        const files = fs.readdirSync(BATCHES_DIR).filter(f => f.endsWith('.json'));
+        for (const file of files) {
+            const batchId = file.replace('.json', '');
+            const batch = loadBatch(batchId);
+            if (batch && batch.completedAt && new Date(batch.completedAt).getTime() < cutoffMs) {
+                fs.unlinkSync(batchPath(batchId));
+                deleted++;
+            }
+        }
+    } catch (e) {
+        console.error(`[CLEANUP] Error during batch cleanup: ${e.message}`);
+    }
+    const cutoff = new Date(cutoffMs).toISOString();
+    if (deleted > 0) {
+        console.log(`[CLEANUP] Deleted ${deleted} batch file(s) completed before ${cutoff}`);
+    } else {
+        console.log(`[CLEANUP] No expired batches to delete (cutoff: ${cutoff})`);
+    }
+}
+
+// Run cleanup once at startup then daily
+runBatchCleanup();
+setInterval(runBatchCleanup, 24 * 60 * 60 * 1000);
+
 // Create a new review batch (called by automation scripts)
 app.post('/api/review/batch', express.json(), (req, res) => {
     const { pin, images, batchName } = req.body;
@@ -331,7 +410,8 @@ app.post('/api/review/batch', express.json(), (req, res) => {
             status: 'pending' // pending | approved | rejected
         })),
         createdAt: new Date().toISOString(),
-        completedAt: null
+        completedAt: null,
+        webhookStatus: 'pending' // pending | sent | failed
     };
     saveBatch(batchId, batch);
     res.json({ batchId, reviewUrl: `/review/${batchId}`, pinRequired: true });
@@ -380,22 +460,28 @@ app.post('/api/review/:batchId/submit', express.json(), (req, res) => {
 
     res.json({ approved, rejected, pending, complete: allDecided });
 
-    // Fire webhook to VPS pipeline when all designs are decided
+    // Fire webhook to VPS pipeline when all designs are decided (with retry)
     if (allDecided && approved > 0) {
         const approvedDesigns = batch.images.filter(i => i.status === 'approved');
-        const webhookUrl = process.env.POD_WEBHOOK_URL || 'http://5.78.126.119:9478/webhook';
-        const webhookSecret = process.env.POD_WEBHOOK_SECRET || 'a34c379b00afa429b2813a3b56aa8a53fc9016f66fd73571384dc81facfacca9';
-        fetch(webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                secret: webhookSecret,
-                batchId: req.params.batchId,
-                approved: approvedDesigns.map(i => ({ id: i.id, label: i.label, url: i.url })),
-            }),
-        }).then(r => console.log(`Webhook fired: ${r.status}`))
-          .catch(e => console.error(`Webhook failed: ${e.message}`));
+        batch.webhookStatus = 'pending';
+        saveBatch(req.params.batchId, batch);
+        fireWebhook(req.params.batchId, approvedDesigns);
     }
+});
+
+// Manual webhook replay — for recovery when webhookStatus=failed
+app.post('/api/review/:batchId/replay-webhook', (req, res) => {
+    const batch = loadBatch(req.params.batchId);
+    if (!batch) return res.status(404).json({ error: 'Batch not found' });
+    if (!batch.completedAt) return res.status(400).json({ error: 'Batch not yet complete' });
+
+    const approvedDesigns = batch.images.filter(i => i.status === 'approved');
+    if (approvedDesigns.length === 0) return res.status(400).json({ error: 'No approved designs in batch' });
+
+    batch.webhookStatus = 'pending';
+    saveBatch(req.params.batchId, batch);
+    fireWebhook(req.params.batchId, approvedDesigns);
+    res.json({ ok: true, message: `Webhook replay initiated for batch ${req.params.batchId}`, approvedCount: approvedDesigns.length });
 });
 
 // Get results (for automation to poll)
@@ -431,7 +517,8 @@ app.post('/review/new-batch', express.json({limit: "10mb"}), (req, res) => {
             status: 'pending'
         })),
         createdAt: new Date().toISOString(),
-        completedAt: null
+        completedAt: null,
+        webhookStatus: 'pending'
     };
     saveBatch(batchId, batch);
     res.json({batchId, pin});
